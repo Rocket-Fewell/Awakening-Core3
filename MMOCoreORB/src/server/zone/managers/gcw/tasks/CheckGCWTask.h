@@ -32,7 +32,7 @@ public:
 		if (server == nullptr || server->isServerShuttingDown())
 			return;
 
-		strongRef->performGCWTasks(false);
+		strongRef->performGCWTasks();
 
 	}
 };

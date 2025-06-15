@@ -41,6 +41,9 @@ class AwakeningLogManager extends ManagedService implements Logger {
 
 	@dereferenced
 	private transient Logger frsFightClubLog;
+	
+	@dereferenced
+	private transient Logger adminBanLog;
 
 	@dereferenced
 	private transient Logger structurePackupLog;
@@ -77,6 +80,12 @@ class AwakeningLogManager extends ManagedService implements Logger {
 
 	@dereferenced
 	private transient Logger customChatLog;
+	
+	@dereferenced
+	private transient Logger racetrackLog;
+	
+	@dereferenced
+	private transient Logger frsPvELog;
 
 	public AwakeningLogManager() {
 		Logger.setLoggingName("AwakeningLogManager");

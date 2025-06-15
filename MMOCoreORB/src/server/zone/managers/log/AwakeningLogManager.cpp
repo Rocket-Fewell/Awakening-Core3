@@ -56,10 +56,15 @@ void AwakeningLogManagerImplementation::initialize() {
 	frsKillLog.setFileLogger("log/player/frsKills.log", true);
 	frsKillLog.setLogging(true);
 
-	//FRS Fight Club Log
-	frsFightClubLog.setLoggingName("FRS Fight Club Log");
+	//FRS Fight Club Ban Log
+	frsFightClubLog.setLoggingName("FRS Fight Club Ban Log");
 	frsFightClubLog.setFileLogger("log/player/frsFightClub.log", true);
 	frsFightClubLog.setLogging(true);
+	
+	//Admin Ban Log
+	adminBanLog.setLoggingName("Admin Ban Log");
+	adminBanLog.setFileLogger("log/player/ban.log", true);
+	adminBanLog.setLogging(true);
 
 	//Structure Packup Log
 	structurePackupLog.setLoggingName("Structure Packup Log");
@@ -120,6 +125,16 @@ void AwakeningLogManagerImplementation::initialize() {
 	customChatLog.setLoggingName("Custom Chat");
 	customChatLog.setFileLogger("log/chat/custom.log", true);
 	customChatLog.setLogging(true);
+	
+	//Racetrack Log
+	racetrackLog.setLoggingName("Racetrack");
+	racetrackLog.setFileLogger("log/player/racetrack.log", true);
+	racetrackLog.setLogging(true);
+	
+	//FRS PvE Experience Log
+	frsPvELog.setLoggingName("FRS PvE");
+	frsPvELog.setFileLogger("log/player/frspve.log", true);
+	frsPvELog.setLogging(true);
 }
 
 void AwakeningLogManagerImplementation::logAction(int logType, const String& message) {
@@ -157,6 +172,9 @@ void AwakeningLogManagerImplementation::logAction(int logType, const String& mes
 		case LogType::FRSFIGHTCLUB:
 			frsFightClubLog.info(message);
 			break;
+		case LogType::ADMINBAN:
+			adminBanLog.info(message);
+			break;
 		case LogType::STRUCTUREPACKUP:
 			structurePackupLog.info(message);
 			break;
@@ -192,6 +210,12 @@ void AwakeningLogManagerImplementation::logAction(int logType, const String& mes
 			break;
 		case LogType::CUSTOMCHAT:
 			customChatLog.info(message);
+			break;
+		case LogType::RACETRACK:
+			racetrackLog.info(message);
+			break;
+		case LogType::FRSPVE:
+			frsPvELog.info(message);
 			break;
 		default:
 			break;

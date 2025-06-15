@@ -82,7 +82,7 @@
 
 #include "server/zone/objects/player/events/PlayerBountyTask.h"
 #include "server/zone/objects/player/events/SpawnProtectionRemovalTask.h"
-#include "server/zone/managers/objectcontroller/ObjectController.h"
+#include "server/zone/objects/tangible/wearables/WearableObject.h"
 
 void PlayerObjectImplementation::initializeTransientMembers() {
 	playerLogLevel = ConfigManager::instance()->getPlayerLogLevel();
@@ -474,6 +474,27 @@ void PlayerObjectImplementation::notifySceneReady() {
 		}
 	}
 
+
+	// Force Player To Join Imperial Chat If Eligible
+	if (ConfigManager::instance()->getCustomRoomsEnabled() && (creature->getFaction() == Factions::FACTIONIMPERIAL || creature->getPlayerObject()->isPrivileged())) {
+		ManagedReference<ChatRoom*> imperialChat = chatManager->getImperialRoom();
+
+		if (imperialChat != nullptr) {
+			imperialChat->sendTo(creature);
+			chatManager->handleChatEnterRoomById(creature, imperialChat->getRoomID(), -1);
+		}
+	}
+
+	// Force Player To Join Rebel Chat If Eligible
+	if (ConfigManager::instance()->getCustomRoomsEnabled() && (creature->getFaction() == Factions::FACTIONREBEL || creature->getPlayerObject()->isPrivileged())) {
+		ManagedReference<ChatRoom*> rebelChat = chatManager->getRebelRoom();
+
+		if (rebelChat != nullptr) {
+			rebelChat->sendTo(creature);
+			chatManager->handleChatEnterRoomById(creature, rebelChat->getRoomID(), -1);
+		}
+	}
+
 	//Re-join chat rooms player was a member of before disconnecting.
 	for (int i = chatRooms.size() - 1; i >= 0; i--) {
 		ChatRoom* room = chatManager->getChatRoom(chatRooms.get(i));
@@ -482,8 +503,10 @@ void PlayerObjectImplementation::notifySceneReady() {
 			if (roomType == ChatRoom::PLANET
 					|| roomType == ChatRoom::GUILD
 					|| room->getRoomID() == chatManager->getGeneralRoom()->getRoomID()
-					|| room->getRoomID() == chatManager->getPvpRoom()->getRoomID())
-				continue; //Planet and Guild are handled above, along with General and PvP if enabled
+					|| room->getRoomID() == chatManager->getPvpRoom()->getRoomID()
+					|| room->getRoomID() == chatManager->getImperialRoom()->getRoomID()
+					|| room->getRoomID() == chatManager->getRebelRoom()->getRoomID())
+				continue; //Planet and Guild are handled above, along with General, PvP and Factional channels if enabled.
 
 			int roomPermission = room->checkEnterPermission(creature);
 
@@ -3234,6 +3257,8 @@ void PlayerObjectImplementation::scheduleSpawnProtectionRemovalTask(bool removeN
 }
 
 void PlayerObjectImplementation::resetJedi() {
+	Locker _locker(parent.get());
+
 	ManagedReference<CreatureObject*> creature = getParent().get().castTo<CreatureObject*>();
 
 	if (creature == nullptr)
@@ -3322,6 +3347,8 @@ int PlayerObjectImplementation::getJediUnlockVariable(int var) {
 }
 
 void PlayerObjectImplementation::sendJediUnlockMessage() {
+	Locker _locker(parent.get());
+
 	ZoneServer* zoneServer = server->getZoneServer();
 	bool msgEnabled = ConfigManager::instance()->getUnlockMessageEnabled();
 
@@ -3378,6 +3405,8 @@ void PlayerObjectImplementation::schedulePlayerBountyTask(bool removeNow) {
 }
 
 void PlayerObjectImplementation::refundPlayerBountyCredits() {
+	Locker _locker(parent.get());
+
 	ZoneServer* zoneServer = server->getZoneServer();
 	ManagedReference<CreatureObject*> creature = getParent().get().castTo<CreatureObject*>();
 	ManagedReference<CreatureObject*> bountyPlacer = zoneServer->getObject(getBountyPlacerId()).castTo<CreatureObject*>();
@@ -3401,6 +3430,8 @@ void PlayerObjectImplementation::refundPlayerBountyCredits() {
 }
 
 void PlayerObjectImplementation::updateCharacterStats(const String& stat, int newValue) {
+	Locker _locker(parent.get());
+
 	if (!ConfigManager::instance()->getCharacterStatsEnabled())
 		return;
 
@@ -3464,44 +3495,32 @@ void PlayerObjectImplementation::unequipBrokenWearables() {
 		return;
 
 	ManagedReference<CreatureObject*> player = getParent().get().castTo<CreatureObject*>();
-
 	if (player == nullptr)
 		return;
 
-	ZoneServer* zoneServer = server->getZoneServer();
-
-	if (zoneServer == nullptr)
+	ManagedReference<SceneObject*> inventory = player->getSlottedObject("inventory");
+	if (inventory == nullptr)
 		return;
 
-	SceneObject* datapad = player->getSlottedObject("datapad");
-	SceneObject* defweapon = player->getSlottedObject("default_weapon");
-	SceneObject* bank = player->getSlottedObject("bank");
+	Locker ilocker(inventory);
 
-	for (int i = 0; i < player->getSlottedObjectsSize(); ++i) {
-		SceneObject* container = player->getSlottedObject(i);
+	VectorMap<String, ManagedReference<SceneObject* > > slotted;
+	player->getSlottedObjects(slotted);
 
-		if (container == datapad || container == nullptr || container == bank || container == defweapon)
-			continue;
+	for (int i = 0; i < slotted.size(); ++i) {
+		SceneObject* object = slotted.get(i);
 
-		if (container->isTangibleObject()) {
-			ManagedReference<TangibleObject*> item = cast<TangibleObject*>(container);
+		if (object != nullptr && object->isWearableObject()) {
+			ManagedReference<WearableObject*> wearableObject = cast<WearableObject*>(object);
 
-			if (item != nullptr && item->isWearableObject()) {
-				WearableObject* wearableObject = cast<WearableObject*>(item.get());
+			if (wearableObject != nullptr) {
+				int max = wearableObject->getMaxCondition();
+				int min = max - wearableObject->getConditionDamage();
+				bool isDisabled = (min == 0 || max == 1);
 
-				if (wearableObject != nullptr && wearableObject->isEquipped()) {
-					SceneObject* inventory = player->getSlottedObject("inventory");
-					int max = item->getMaxCondition();
-					int min = max - item->getConditionDamage();
-					bool isDisabled = (min == 0 || max == 1);
-
-					if (wearableObject->isEquipped() && isDisabled && !wearableObject->isWearableContainerObject()) {
-						ObjectController* objectController = zoneServer->getObjectController();
-
-						objectController->transferObject(wearableObject, inventory, wearableObject->getContainmentType(), true, true);
-						inventory->transferObject(wearableObject, -1, true);
-						player->sendSystemMessage("Your " + wearableObject->getDisplayedName() + " has been unequipped due to poor condition.");
-					}
+				if (isDisabled) {
+					inventory->transferObject(wearableObject, -1, true, true);
+					inventory->broadcastObject(wearableObject, true);
 				}
 			}
 		}
@@ -3513,63 +3532,50 @@ void PlayerObjectImplementation::unequipSkillWearables() {
 		return;
 
 	ManagedReference<CreatureObject*> player = getParent().get().castTo<CreatureObject*>();
-
 	if (player == nullptr)
 		return;
 
-	ZoneServer* zoneServer = server->getZoneServer();
-
-	if (zoneServer == nullptr)
+	ManagedReference<SceneObject*> inventory = player->getSlottedObject("inventory");
+	if (inventory == nullptr)
 		return;
 
-	SceneObject* datapad = player->getSlottedObject("datapad");
-	SceneObject* defweapon = player->getSlottedObject("default_weapon");
-	SceneObject* bank = player->getSlottedObject("bank");
+	Locker ilocker(inventory);
 
-	for (int i = 0; i < player->getSlottedObjectsSize(); ++i) {
-		SceneObject* container = player->getSlottedObject(i);
+	VectorMap<String, ManagedReference<SceneObject* > > slotted;
+	player->getSlottedObjects(slotted);
 
-		if (container == datapad || container == nullptr || container == bank || container == defweapon)
-			continue;
+	for (int i = 0; i < slotted.size(); ++i) {
+		SceneObject* object = slotted.get(i);
 
-		if (container->isTangibleObject()) {
-			ManagedReference<TangibleObject*> item = cast<TangibleObject*>(container);
+		if (object != nullptr && object->isWearableObject()) {
+			bool cantEquip = true;
+			ManagedReference<WearableObject*> wearableObject = cast<WearableObject*>(object);
 
-			if (item != nullptr && item->isWearableObject()) {
-				bool canEquip = false;
-				WearableObject* wearableObject = cast<WearableObject*>(item.get());
+			if (wearableObject != nullptr) {
+				SharedTangibleObjectTemplate* tanoData = dynamic_cast<SharedTangibleObjectTemplate*>(wearableObject->getObjectTemplate());
 
-				if (wearableObject != nullptr && wearableObject->isEquipped()) {
-					SharedTangibleObjectTemplate* tanoData = dynamic_cast<SharedTangibleObjectTemplate*>(wearableObject->getObjectTemplate());
+				if (tanoData != nullptr) {
+					const Vector<String>& skillsRequired = tanoData->getCertificationsRequired();
 
-					if (tanoData != nullptr) {
-						const Vector<String>& skillsRequired = tanoData->getCertificationsRequired();
+					if (skillsRequired.size() > 0) {
+						for (int i = 0; i < skillsRequired.size(); i++) {
+							const String& skill = skillsRequired.get(i);
 
-						if (skillsRequired.size() > 0) {
-							for (int i = 0; i < skillsRequired.size(); i++) {
-								const String& skill = skillsRequired.get(i);
-
-								if (!skill.isEmpty() && player->hasSkill(skill)) {
-									canEquip = true;
-									break;
-								}
+							if (!skill.isEmpty() && player->hasSkill(skill)) {
+								cantEquip = true;
+								break;
 							}
-
-						} else {
-							// there are no skill requirements
-							canEquip = true;
 						}
+
+					} else {
+						// there are no skill requirements
+						cantEquip = true;
 					}
+				}
 
-					SceneObject* inventory = player->getSlottedObject("inventory");
-
-					if (wearableObject->isEquipped() && !canEquip && !wearableObject->isWearableContainerObject()) {
-						ObjectController* objectController = zoneServer->getObjectController();
-
-						objectController->transferObject(wearableObject, inventory, wearableObject->getContainmentType(), true, true);
-						inventory->transferObject(wearableObject, -1, true);
-						player->sendSystemMessage("Your " + wearableObject->getDisplayedName() + " has been unequipped due to lack of skill requirements.");
-					}
+				if (cantEquip) {
+					inventory->transferObject(wearableObject, -1, true, true);
+					inventory->broadcastObject(wearableObject, true);
 				}
 			}
 		}

@@ -2404,14 +2404,26 @@ int CombatManager::getArmorReduction(TangibleObject* attacker, WeaponObject* wea
 		// inflict condition damage
 		Locker alocker(armor);
 
-		armor->inflictDamage(armor, 0, damage * 0.2, true, true);
+		armor->inflictDamage(armor, 0, damage * 0.15, true, true);
+
+		//Unequip Broken Wearable
+		if (ConfigManager::instance()->getUnequipBrokenWearablesEnabled()) {
+			int max = armor->getMaxCondition();
+			int min = max - armor->getConditionDamage();
+			bool isDisabled = (min == 0 || max == 1);
+
+			if (isDisabled) {
+				SceneObject* inventory = defender->getSlottedObject("inventory");
+
+				if (inventory != nullptr) {
+					Locker ilocker(inventory);
+					inventory->transferObject(armor, -1, true, true);
+					inventory->broadcastObject(armor, true);
+
+				}
+			}
+		}
 	}
-
-	//UnequipBrokenWearables
-	PlayerObject* defenderGhost = defender->getPlayerObject();
-
-	if (defenderGhost != nullptr)
-		defenderGhost->unequipBrokenWearables();
 
 	return damage;
 }

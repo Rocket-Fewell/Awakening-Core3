@@ -144,9 +144,10 @@ void ImageDesignSessionImplementation::updateImageDesign(CreatureObject* updater
 		String hairTemplate = imageDesignData.getHairTemplate();
 
 		bool statMig = imageDesignData.isStatMigrationRequested();
+		bool inEligibleLocation = (strongReferenceDesigner->getParentRecursively(SceneObjectType::SALONBUILDING) && strongReferenceTarget->getParentRecursively(SceneObjectType::SALONBUILDING))
+				|| (strongReferenceDesigner->getParentRecursively(SceneObjectType::THEATERBUILDING) && strongReferenceTarget->getParentRecursively(SceneObjectType::THEATERBUILDING));
 
-		if (statMig && strongReferenceDesigner->getParentRecursively(SceneObjectType::SALONBUILDING) &&
-			strongReferenceDesigner->getParentRecursively(SceneObjectType::SALONBUILDING) && strongReferenceDesigner != strongReferenceTarget) {
+		if (statMig && inEligibleLocation && strongReferenceDesigner != strongReferenceTarget) {
 			ManagedReference<Facade*> facade = strongReferenceTarget->getActiveSession(SessionFacadeType::MIGRATESTATS);
 			ManagedReference<MigrateStatsSession*> session = dynamic_cast<MigrateStatsSession*>(facade.get());
 
@@ -278,12 +279,14 @@ void ImageDesignSessionImplementation::checkDequeueEvent(SceneObject* scene) {
 	if (scene == designerCreature) {
 		Locker clocker(targetCreature, designerCreature);
 
-		if (targetCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr || designerCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr)
+		if ((targetCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr || designerCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr)
+				&& (targetCreature->getParentRecursively(SceneObjectType::THEATERBUILDING) == nullptr || designerCreature->getParentRecursively(SceneObjectType::THEATERBUILDING) == nullptr))
 			return;
 	} else if (scene == targetCreature) {
 		Locker clocker(designerCreature, targetCreature);
 
-		if (targetCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr || designerCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr)
+		if ((targetCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr || designerCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr)
+				&& (targetCreature->getParentRecursively(SceneObjectType::THEATERBUILDING) == nullptr || designerCreature->getParentRecursively(SceneObjectType::THEATERBUILDING) == nullptr))
 			return;
 	}
 
@@ -297,7 +300,7 @@ void ImageDesignSessionImplementation::sessionTimeout() {
 	if (designerCreature != nullptr) {
 		Locker locker(designerCreature);
 
-		if (designerCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr || imageDesignData.isAcceptedByDesigner()) {
+		if ((designerCreature->getParentRecursively(SceneObjectType::THEATERBUILDING) == nullptr && designerCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr) || imageDesignData.isAcceptedByDesigner()) {
 			designerCreature->sendSystemMessage("Image Design session has timed out. Changes aborted.");
 
 			cancelImageDesign(designerCreature->getObjectID(), targetCreature->getObjectID(), 0, 0, imageDesignData);
@@ -310,7 +313,7 @@ void ImageDesignSessionImplementation::sessionTimeout() {
 		Locker locker(designerCreature);
 		Locker clocker(targetCreature, designerCreature);
 
-		if (targetCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr || imageDesignData.isAcceptedByDesigner()) {
+		if ((targetCreature->getParentRecursively(SceneObjectType::THEATERBUILDING) == nullptr && targetCreature->getParentRecursively(SceneObjectType::SALONBUILDING) == nullptr) || imageDesignData.isAcceptedByDesigner()) {
 			targetCreature->sendSystemMessage("Image Design session has timed out. Changes aborted.");
 
 			cancelImageDesign(designerCreature->getObjectID(), targetCreature->getObjectID(), 0, 0, imageDesignData);

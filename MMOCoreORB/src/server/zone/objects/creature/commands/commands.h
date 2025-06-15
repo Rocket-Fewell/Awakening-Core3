@@ -776,8 +776,9 @@
 #include "VitalizeCommand.h"
 #include "VolleyFireCommand.h"
 #include "VolleyFireAttackCommand.h"
-#include "Warcry1Command.h"
-#include "Warcry2Command.h"
+//Server Custom - Temporarily Disable Warcry
+//#include "Warcry1Command.h"
+//#include "Warcry2Command.h"
 #include "WarningShotCommand.h"
 #include "WatchCommand.h"
 #include "WildShot1Command.h"
@@ -859,5 +860,22 @@
 #include "NpcForceKnockdown2Command.h"
 #include "NpcForceLightningCone1Command.h"
 #include "NpcForceLightningCone2Command.h"
+
+#include "NpcUnarmedHit3Command.h"
+#include "NpcUnarmedLegHit1Command.h"
+#include "NpcUnarmedBodyHit1Command.h"
+#include "NpcUnarmedHeadHit1Command.h"
+#include "NpcUnarmedSpinAttack2Command.h"
+#include "NpcUnarmedCombo2Command.h"
+#include "NpcUnarmedKnockdown2Command.h"
+#include "NpcUnarmedDizzy1Command.h"
+
+#include "NpcMelee1hHit3Command.h"
+#include "NpcMelee1hScatterHit2Command.h"
+#include "NpcMelee1hDizzyHit2Command.h"
+#include "NpcMelee1hHealthHit2Command.h"
+#include "NpcMelee1hSpinAttack2Command.h"
+#include "NpcMelee1hBodyHit2Command.h"
+#include "NpcMelee1hBlindHit2Command.h"
 
 #endif /* COMMANDSNEW_H_ */

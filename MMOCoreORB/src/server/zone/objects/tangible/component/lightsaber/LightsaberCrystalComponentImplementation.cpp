@@ -482,11 +482,29 @@ void LightsaberCrystalComponentImplementation::updateCrystal(int value){
 }
 
 void LightsaberCrystalComponentImplementation::updateCraftingValues(CraftingValues* values, bool firstUpdate) {
+	int colorPaletteMaxIndex = 63; //SWG Awakening Custom - Lightsaber crystal palette expansion
 	int colorMax = values->getMaxValue("color");
+	int colorMin = values->getMinValue("color");
 	int color = values->getCurrentValue("color");
+	
+	if (colorMax > colorPaletteMaxIndex)
+		colorMax = colorPaletteMaxIndex;
 
+	/*
+		Power crystal (31)
+		Base colours (0-11)
+		Intial named crystal (12-30)
+		Additional Awakening Named Crystals (32-colorPaletteMaxIndex)
+	*/
+	//Offloading the logic for random colour calculation onto updateCraftingValues rather than the loot manager
 	if (colorMax != 31) {
-		int finalColor = Math::min(color, 30);
+		int finalColor = 0;
+		
+		//account for colour crystal ranges which overlap the hardcoded power crystal value
+		do {
+			finalColor = colorMin + System::random(colorMax-colorMin);
+		} while(finalColor == 31);
+		
 		setColor(finalColor);
 		updateCrystal(finalColor);
 	} else {

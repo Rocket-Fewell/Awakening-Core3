@@ -355,6 +355,12 @@ TangibleObject* LootManagerImplementation::createLootObject(const LootItemTempla
 		if (subtitle == "hitpoints" && !prototype->isComponent()) {
 			continue;
 		}
+		
+		//Fix an issue where un-named "named" color crystals from dropping via force_color_crystal loot item
+		//This should block the min/max color index specified on the lightsaber crystal loot item from having modifiers applied
+		if (subtitle == "color" && prototype->isLightsaberCrystalObject()) {
+			continue;
+		}
 
 		float min = craftingValues->getMinValue(subtitle);
 		float max = craftingValues->getMaxValue(subtitle);

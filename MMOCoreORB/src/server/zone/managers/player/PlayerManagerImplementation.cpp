@@ -1881,14 +1881,29 @@ void PlayerManagerImplementation::disseminateExperience(TangibleObject* destruct
 
 				//Award individual expType
 				awardExperience(attackerCreo, xpType, xpAmount);
-
-				//Award FRS Experience
-				PlayerObject* attackerGhost = attackerCreo->getPlayerObject();
-
-				if (attackerGhost != nullptr && attackerGhost->getFrsData()->getRank() >= 0)
-					awardExperience(attackerCreo, "force_rank_xp", frsXp, true, 1.0f, false);
 			}
 
+
+			
+			//Award & Log FRS Experience
+			PlayerObject* attackerGhost = attackerCreo->getPlayerObject();
+
+			if (attackerGhost != nullptr && attackerGhost->getFrsData()->getRank() >= 0 && frsXp > 0)
+			{
+				ManagedReference<AwakeningLogManager*> logMan = attackerCreo->getZoneServer()->getAwakeningLogManager();
+				if (logMan != nullptr)
+				{
+					StringBuffer logEntry;
+					logEntry << attackerCreo->getFirstName() << " has killed " << destructedObject->getDisplayedName() << " and been awarded " + String::valueOf(frsXp) + " Force Rank experience.";
+					logMan->logAction(LogType::FRSPVE, logEntry.toString());
+				}					
+				
+				awardExperience(attackerCreo, "force_rank_xp", frsXp, true, 1.0f, false);
+			}
+
+				
+
+			//Award Combat Experience
 			awardExperience(attackerCreo, "combat_general", combatXp, true, 0.1f);
 
 
@@ -4047,13 +4062,11 @@ String PlayerManagerImplementation::banAccount(PlayerObject* admin, Account* acc
 	account->setBanExpires(time(0) + seconds);
 	account->setBanAdmin(admin->getAccountID());
 
-	StringBuffer banResult;
-
-	Time expireTime;
-
-	expireTime.addMiliTime(seconds * 1000);
-
-	banResult << "Account \"" + account->getUsername() + "\" successfully banned until " << expireTime.getFormattedTime() + " server time";
+	Time expires;
+	expires.addMiliTime((uint64)seconds * 1000);
+	
+	StringBuffer logEntry;
+	logEntry << "ACCOUNT BAN: " << account->getUsername() << " (ID: " << account->getAccountID() << ") has been BANNED by staff member " << admin->getAccount()->getUsername() << " (ID: " << admin->getAccountID() << ") UNTIL: " << expires.getFormattedTime() << " server time, for REASON: " << escapedReason;
 
 	try {
 		Reference<const CharacterList*> characters = account->getCharacterList();
@@ -4078,12 +4091,18 @@ String PlayerManagerImplementation::banAccount(PlayerObject* admin, Account* acc
 			}
 		}
 	} catch(Exception& e) {
-		banResult << ", error kicking characters: " + e.getMessage();
+		logEntry << ", error kicking characters: " + e.getMessage();
 	}
+	
+	ManagedReference<AwakeningLogManager*> logMan = ServerCore::getZoneServer()->getAwakeningLogManager();
+	if (logMan == nullptr)
+			return "Account Successfully Banned, but error logging transaction to file";
+		
+	logEntry << ".";
+			
+	logMan->logAction(LogType::ADMINBAN, logEntry.toString());
 
-	banResult << ".";
-
-	return banResult.toString();
+	return logEntry.toString();
 }
 
 String PlayerManagerImplementation::unbanAccount(PlayerObject* admin, Account* account, const String& reason) {
@@ -4109,8 +4128,16 @@ String PlayerManagerImplementation::unbanAccount(PlayerObject* admin, Account* a
 	Locker locker(account);
 	account->setBanExpires(System::getMiliTime());
 	account->setBanReason(reason);
+	
+	ManagedReference<AwakeningLogManager*> logMan = ServerCore::getZoneServer()->getAwakeningLogManager();
+	if (logMan == nullptr)
+		return "Account Successfully Unbanned, but error logging transaction to file";
+			
+	StringBuffer logEntry;
+	logEntry << "ACCOUNT BAN: " << account->getUsername() << " (ID: " << account->getAccountID() << ") has been UNBANNED by staff member " << admin->getAccount()->getUsername() << " (ID: " << admin->getAccountID() << ") for REASON: " << escapedReason << ".";
+	logMan->logAction(LogType::ADMINBAN, logEntry.toString());
 
-	return "Account Successfully Unbanned";
+	return logEntry.toString();
 }
 
 String PlayerManagerImplementation::banFromGalaxy(PlayerObject* admin, Account* account, const uint32 galaxy, uint32 seconds, const String& reason) {
@@ -4137,8 +4164,7 @@ String PlayerManagerImplementation::banFromGalaxy(PlayerObject* admin, Account* 
 
 	Time current;
 	Time expires;
-
-	expires.addMiliTime(seconds*10000);
+	expires.addMiliTime((uint64)seconds * 1000);
 
 	Reference<GalaxyBanEntry*> ban = new GalaxyBanEntry();
 
@@ -4153,6 +4179,14 @@ String PlayerManagerImplementation::banFromGalaxy(PlayerObject* admin, Account* 
 	ban->setBanReason(reason);
 
 	account->addGalaxyBan(ban, galaxy);
+	
+	ManagedReference<AwakeningLogManager*> logMan = ServerCore::getZoneServer()->getAwakeningLogManager();
+	if (logMan == nullptr)
+		return "Successfully Banned from Galaxy, error kicking characters, error logging transaction to file.";
+			
+	StringBuffer logEntry;
+	logEntry << "GALAXY BAN: " << account->getUsername() << " (ID: " << account->getAccountID() << ") has been BANNED by staff member " << admin->getAccount()->getUsername() << " (ID: " << admin->getAccountID() << ") from GALAXY: " << String::valueOf(galaxy) << " UNTIL: " << expires.getFormattedTime() << " server time, for REASON: " << escapedReason << ".";
+	logMan->logAction(LogType::ADMINBAN, logEntry.toString());
 
 	try {
 
@@ -4185,7 +4219,7 @@ String PlayerManagerImplementation::banFromGalaxy(PlayerObject* admin, Account* 
 		return "Successfully Banned from Galaxy, but error kicking characters. " + e.getMessage();
 	}
 
-	return "Successfully Banned from Galaxy";
+	return logEntry.toString();
 }
 
 String PlayerManagerImplementation::unbanFromGalaxy(PlayerObject* admin, Account* account, const uint32 galaxy, const String& reason) {
@@ -4211,8 +4245,16 @@ String PlayerManagerImplementation::unbanFromGalaxy(PlayerObject* admin, Account
 
 	Locker locker(account);
 	account->removeGalaxyBan(galaxy);
+	
+	ManagedReference<AwakeningLogManager*> logMan = ServerCore::getZoneServer()->getAwakeningLogManager();
+	if (logMan == nullptr)
+		return "Successfully Unbanned from Galaxy, but error logging transaction to file.";
+			
+	StringBuffer logEntry;
+	logEntry << "GALAXY BAN: " << account->getUsername() << " (ID: " << account->getAccountID() << ") has been UNBANNED by staff member " << admin->getAccount()->getUsername() << " (ID: " << admin->getAccountID() << ") from GALAXY: " << String::valueOf(galaxy) << " for REASON: " << escapedReason << ".";
+	logMan->logAction(LogType::ADMINBAN, logEntry.toString());
 
-	return "Successfully Unbanned from Galaxy";
+	return logEntry.toString();
 }
 
 String PlayerManagerImplementation::banCharacter(PlayerObject* admin, Account* account, const String& name, const uint32 galaxyID, uint32 seconds, const String& reason) {
@@ -4247,7 +4289,7 @@ String PlayerManagerImplementation::banCharacter(PlayerObject* admin, Account* a
 
 		if (entry.getFirstName() == name && entry.getGalaxyID() == galaxyID) {
 			Time expires;
-			expires.addMiliTime(seconds*1000);
+			expires.addMiliTime((uint64)seconds * 1000);
 
 			entry.setBanReason(reason);
 			entry.setBanAdmin(admin->getAccountID());
@@ -4256,6 +4298,17 @@ String PlayerManagerImplementation::banCharacter(PlayerObject* admin, Account* a
 	}
 
 	locker.release();
+	
+	Time expires;
+	expires.addMiliTime((uint64)seconds * 1000);
+	
+	ManagedReference<AwakeningLogManager*> logMan = ServerCore::getZoneServer()->getAwakeningLogManager();
+	if (logMan == nullptr)
+		return "Successfully Banned Character, error kicking character, error logging transaction to file.";
+			
+	StringBuffer logEntry;
+	logEntry << "CHARACTER BAN: " << escapedName << " (ACCOUNT: " << account->getUsername() << " ID: " << account->getAccountID() << ") has been BANNED by staff member " << admin->getAccount()->getUsername() << " (ID: " << admin->getAccountID() << ") from GALAXY: " << String::valueOf(galaxyID) << " UNTIL: " << expires.getFormattedTime() << " server time, for REASON: " << escapedReason << ".";
+	logMan->logAction(LogType::ADMINBAN, logEntry.toString());
 
 	try {
 		if (server->getGalaxyID() == galaxyID) {
@@ -4279,7 +4332,7 @@ String PlayerManagerImplementation::banCharacter(PlayerObject* admin, Account* a
 		return "Character Successfully Banned, but error kicking Character. " + e.getMessage();
 	}
 
-	return "Character Successfully Banned";
+	return logEntry.toString();
 }
 
 String PlayerManagerImplementation::unbanCharacter(PlayerObject* admin, Account* account, const String& name, const uint32 galaxyID, const String& reason) {
@@ -4313,8 +4366,16 @@ String PlayerManagerImplementation::unbanCharacter(PlayerObject* admin, Account*
 		entry->setBanExpiration(now);
 		entry->setBanReason(reason);
 	}
+	
+	ManagedReference<AwakeningLogManager*> logMan = ServerCore::getZoneServer()->getAwakeningLogManager();
+	if (logMan == nullptr)
+		return "Successfully Unbanned Character, error logging transaction to file.";
+			
+	StringBuffer logEntry;
+	logEntry << "CHARACTER BAN: " << escapedName << " (ACCOUNT: " << account->getUsername() << " ID: " << account->getAccountID() << ") has been UNBANNED by staff member " << admin->getAccount()->getUsername() << " (ID: " << admin->getAccountID() << ") from GALAXY: " << String::valueOf(galaxyID) << " for REASON: " << escapedReason << ".";
+	logMan->logAction(LogType::ADMINBAN, logEntry.toString());
 
-	return "Character Successfully Unbanned";
+	return logEntry.toString();
 }
 
 void PlayerManagerImplementation::clearOwnedStructuresPermissions(CreatureObject* player) {
@@ -6354,7 +6415,7 @@ void PlayerManagerImplementation::doPvpDeathRatingUpdate(CreatureObject* player,
 			}
 
 			StringBuffer logEntry;
-			logEntry << attackerCreo->getFirstName() << " assisted in killing or killed " << player->getFirstName() << " in the force ranking system.";
+			logEntry << attackerCreo->getFirstName() << "(GAINED " + String::valueOf(attackerFrsXp) + " FRS XP)" << " assisted in killing or killed " << player->getFirstName() << "(LOST " + String::valueOf(frsXpAdjustment) + " FRS XP)" << " in the force ranking system.";
 			logMan->logAction(LogType::FRSKILL, logEntry.toString());
 		}
 
@@ -6827,52 +6888,6 @@ void PlayerManagerImplementation::notifyPvpKill(CreatureObject* victor, Creature
 		chatManager->broadcastGalaxy(nullptr, victor->getDisplayedName() + " has defeated " + victim->getDisplayedName() + " in combat.");
 	}
 
-	//Award PvP Badges To Victor
-	int pvpKills = victorGhost->getPvpKills();
-	switch (pvpKills) {
-		case 50:
-			awardBadge(victorGhost, 144);
-			break;
-		case 75:
-			awardBadge(victorGhost, 145);
-			break;
-		case 100:
-			awardBadge(victorGhost, 146);
-			break;
-		case 250:
-			awardBadge(victorGhost, 147);
-			break;
-		case 500:
-			awardBadge(victorGhost, 148);
-			break;
-		case 750:
-			awardBadge(victorGhost, 149);
-			break;
-		case 1000:
-			awardBadge(victorGhost, 150);
-			break;
-		case 1500:
-			awardBadge(victorGhost, 151);
-			break;
-		case 2000:
-			awardBadge(victorGhost, 152);
-			break;
-		case 2500:
-			awardBadge(victorGhost, 153);
-			break;
-		case 3000:
-			awardBadge(victorGhost, 154);
-			break;
-		case 4000:
-			awardBadge(victorGhost, 155);
-			break;
-		case 5000:
-			awardBadge(victorGhost, 156);
-			break;
-		default:
-			break;
-	}
-
 	//PvP Database Logging
 	String victorFactionString = "Neutral";
 	String victimFactionString = "Neutral";
@@ -6914,8 +6929,8 @@ void PlayerManagerImplementation::offerPlayerBounty(CreatureObject* attacker, Cr
 	if (attackerGhost->isPrivileged())
 		return;
 
-	//Player already has a bounty on their head or they are a jedi
-	if (attackerGhost->hasPlayerBounty() || attacker->hasSkill("force_title_jedi_rank_02"))
+	//Player already has a bounty on their head, they are a jedi, or they are executing a Jedi bounty on the defender
+	if (attackerGhost->hasPlayerBounty() || attacker->hasSkill("force_title_jedi_rank_02") || attacker->hasBountyMissionFor(defender))
 		return;
 
 	//50% chance to offer a bounty.

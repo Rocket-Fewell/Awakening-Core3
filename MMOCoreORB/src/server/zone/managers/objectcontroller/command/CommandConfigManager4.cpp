@@ -116,8 +116,9 @@
 #include "server/zone/objects/creature/commands/VitalizeCommand.h"
 #include "server/zone/objects/creature/commands/VolleyFireCommand.h"
 #include "server/zone/objects/creature/commands/VolleyFireAttackCommand.h"
-#include "server/zone/objects/creature/commands/Warcry1Command.h"
-#include "server/zone/objects/creature/commands/Warcry2Command.h"
+//Server Custom - Temporarily Disable Warcry
+//#include "server/zone/objects/creature/commands/Warcry1Command.h"
+//#include "server/zone/objects/creature/commands/Warcry2Command.h"
 #include "server/zone/objects/creature/commands/WarningShotCommand.h"
 #include "server/zone/objects/creature/commands/WatchCommand.h"
 #include "server/zone/objects/creature/commands/WildShot1Command.h"
@@ -203,6 +204,23 @@
 #include "server/zone/objects/creature/commands/NpcForceLightningCone1Command.h"
 #include "server/zone/objects/creature/commands/NpcForceLightningCone2Command.h"
 
+#include "server/zone/objects/creature/commands/NpcUnarmedHit3Command.h"
+#include "server/zone/objects/creature/commands/NpcUnarmedLegHit1Command.h"
+#include "server/zone/objects/creature/commands/NpcUnarmedBodyHit1Command.h"
+#include "server/zone/objects/creature/commands/NpcUnarmedHeadHit1Command.h"
+#include "server/zone/objects/creature/commands/NpcUnarmedSpinAttack2Command.h"
+#include "server/zone/objects/creature/commands/NpcUnarmedCombo2Command.h"
+#include "server/zone/objects/creature/commands/NpcUnarmedKnockdown2Command.h"
+#include "server/zone/objects/creature/commands/NpcUnarmedDizzy1Command.h"
+
+#include "server/zone/objects/creature/commands/NpcMelee1hHit3Command.h"
+#include "server/zone/objects/creature/commands/NpcMelee1hScatterHit2Command.h"
+#include "server/zone/objects/creature/commands/NpcMelee1hDizzyHit2Command.h"
+#include "server/zone/objects/creature/commands/NpcMelee1hHealthHit2Command.h"
+#include "server/zone/objects/creature/commands/NpcMelee1hSpinAttack2Command.h"
+#include "server/zone/objects/creature/commands/NpcMelee1hBodyHit2Command.h"
+#include "server/zone/objects/creature/commands/NpcMelee1hBlindHit2Command.h"
+
 using namespace server::zone::managers::objectcontroller::command;
 
 
@@ -280,8 +298,9 @@ void CommandConfigManager::registerCommands4() {
 	commandFactory.registerCommand<VitalizeCommand>(String("vitalize").toLowerCase());
 	commandFactory.registerCommand<VolleyFireCommand>(String("volleyFire").toLowerCase());
 	commandFactory.registerCommand<VolleyFireAttackCommand>(String("volleyFireAttack").toLowerCase());
-	commandFactory.registerCommand<Warcry1Command>(String("warcry1").toLowerCase());
-	commandFactory.registerCommand<Warcry2Command>(String("warcry2").toLowerCase());
+	//Server Custom - Temporarily Disable Warcry
+	//commandFactory.registerCommand<Warcry1Command>(String("warcry1").toLowerCase());
+	//commandFactory.registerCommand<Warcry2Command>(String("warcry2").toLowerCase());
 	commandFactory.registerCommand<WarningShotCommand>(String("warningShot").toLowerCase());
 	commandFactory.registerCommand<WatchCommand>(String("watch").toLowerCase());
 	commandFactory.registerCommand<WildShot1Command>(String("wildShot1").toLowerCase());
@@ -368,4 +387,21 @@ void CommandConfigManager::registerCommands4() {
 	commandFactory.registerCommand<NpcForceKnockdown2Command>(String("npcForceKnockdown2").toLowerCase());
 	commandFactory.registerCommand<NpcForceLightningCone1Command>(String("npcForceLightningCone1").toLowerCase());
 	commandFactory.registerCommand<NpcForceLightningCone2Command>(String("npcForceLightningCone2").toLowerCase());
+
+	commandFactory.registerCommand<NpcUnarmedHit3Command>(String("npcUnarmedHit3").toLowerCase());
+	commandFactory.registerCommand<NpcUnarmedLegHit1Command>(String("npcUnarmedLegHit1").toLowerCase());
+	commandFactory.registerCommand<NpcUnarmedBodyHit1Command>(String("npcUnarmedBodyHit1").toLowerCase());
+	commandFactory.registerCommand<NpcUnarmedHeadHit1Command>(String("npcUnarmedHeadHit1").toLowerCase());
+	commandFactory.registerCommand<NpcUnarmedSpinAttack2Command>(String("npcUnarmedSpinAttack2").toLowerCase());
+	commandFactory.registerCommand<NpcUnarmedCombo2Command>(String("npcUnarmedCombo2").toLowerCase());
+	commandFactory.registerCommand<NpcUnarmedKnockdown2Command>(String("npcUnarmedKnockdown2").toLowerCase());
+	commandFactory.registerCommand<NpcUnarmedDizzy1Command>(String("npcUnarmedDizzy1").toLowerCase());
+
+	commandFactory.registerCommand<NpcMelee1hHit3Command>(String("npcMelee1hHit3").toLowerCase());
+	commandFactory.registerCommand<NpcMelee1hScatterHit2Command>(String("npcMelee1hScatterHit2").toLowerCase());
+	commandFactory.registerCommand<NpcMelee1hDizzyHit2Command>(String("npcMelee1hDizzyHit2").toLowerCase());
+	commandFactory.registerCommand<NpcMelee1hHealthHit2Command>(String("npcMelee1hHealthHit2").toLowerCase());
+	commandFactory.registerCommand<NpcMelee1hSpinAttack2Command>(String("npcMelee1hSpinAttack2").toLowerCase());
+	commandFactory.registerCommand<NpcMelee1hBodyHit2Command>(String("npcMelee1hBodyHit2").toLowerCase());
+	commandFactory.registerCommand<NpcMelee1hBlindHit2Command>(String("npcMelee1hBlindHit2").toLowerCase());
 }

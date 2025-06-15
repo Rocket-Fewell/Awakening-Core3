@@ -90,6 +90,7 @@
 #include "server/zone/objects/intangible/TheaterObject.h"
 #include "server/zone/objects/tangible/misc/ContractCrate.h"
 #include "server/zone/managers/crafting/schematicmap/SchematicMap.h"
+#include "server/zone/objects/tangible/misc/PrizeToken.h"
 
 int DirectorManager::DEBUG_MODE = 0;
 int DirectorManager::ERROR_CODE = NO_ERROR;

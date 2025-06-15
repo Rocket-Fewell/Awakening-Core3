@@ -339,7 +339,7 @@ void ObjectManager::registerObjectTypes() {
 	objectFactory.registerObject<FighterShipObject>(SceneObjectType::SHIPFIGHTER);
 	objectFactory.registerObject<SpaceStationObject>(SceneObjectType::SHIPSTATION);
 	objectFactory.registerObject<TangibleObject>(SceneObjectType::CRYSTAL);
-
+	objectFactory.registerObject<PrizeToken>(SceneObjectType::PRIZETOKEN);
 	objectFactory.registerObject<ETerminal>(SceneObjectType::ETERMINAL);
 	objectFactory.registerObject<FactionalArea>(SceneObjectType::FACTIONALAREA);
 }
@@ -350,6 +350,26 @@ void ObjectManager::updateObjectVersion() {
 
 		ObjectDatabaseManager::instance()->checkpoint();
 	}
+
+	/*
+	ObjectDatabase* sceneDb = ObjectDatabaseManager::instance()->loadObjectDatabase("sceneobjects", true, 0xFFFF, false);
+	ObjectDatabase* sceneDbNew = ObjectDatabaseManager::instance()->loadObjectDatabase("sceneobjectsnew", true, 0xFFFF, false);
+
+	if (sceneDb == nullptr || sceneDbNew == nullptr)
+		return;
+
+	ObjectInputStream objectData(2000);
+	ObjectDatabaseIterator iterator(sceneDb);
+	uint64 objectID;
+
+	while (iterator.getNextKey(objectID)) {
+		if (!sceneDb->getData(objectID, &objectData, berkeley::LockMode::READ_UNCOMMITED, false, true)) {
+			sceneDbNew->tryPutData(objectID, &objectData, nullptr);
+		}
+
+		objectData.reset();
+	}
+	*/
 }
 
 void ObjectManager::loadLastUsedObjectID() {

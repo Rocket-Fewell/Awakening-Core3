@@ -101,13 +101,14 @@ void FactionManager::awardFactionStanding(CreatureObject* player, const String& 
 	const SortedVector<String>* enemies = faction.getEnemies();
 	const SortedVector<String>* allies = faction.getAllies();
 
-	if (!faction.isPlayerAllowed())
+	if (!faction.isPlayerAllowed() && factionName != "nightsister_axkva")
 		return;
 
 	float gain = level * faction.getAdjustFactor();
 	float lose = gain * 2;
 
-	ghost->decreaseFactionStanding(factionName, lose);
+	if (factionName != "nightsister_axkva")
+		ghost->decreaseFactionStanding(factionName, lose);
 
 	//Lose faction standing to allies of the creature.
 	for (int i = 0; i < allies->size(); ++i) {

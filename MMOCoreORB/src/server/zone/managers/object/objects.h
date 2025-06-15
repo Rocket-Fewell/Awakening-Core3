@@ -132,6 +132,7 @@
 #include "server/zone/objects/area/MissionReconActiveArea.h"
 #include "server/zone/objects/area/SpawnArea.h"
 #include "server/zone/objects/tangible/misc/ContractCrate.h"
+#include "server/zone/objects/tangible/misc/PrizeToken.h"
 
 #include "server/zone/objects/area/FactionalArea.h"
 #include "server/zone/objects/tangible/terminal/eterminal/ETerminal.h"

@@ -92,7 +92,7 @@ void TangibleObjectImplementation::notifyLoadFromDatabase() {
 		for (int i = activeAreas.size() - 1; i >= 0; i--) {
 			auto& area = activeAreas.get(i);
 
-			if (!area->isNavArea()) {
+			if (!area->isNavArea() && !tano->isWearableObject()) {
 				area->notifyExit(tano);
 				activeAreas.remove(i);
 			}

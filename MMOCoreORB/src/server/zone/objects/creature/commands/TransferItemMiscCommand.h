@@ -324,6 +324,8 @@ public:
 
 		bool notifyContainerContentsChanged = (objectToTransfer->getParentRecursively(SceneObjectType::STATICLOOTCONTAINER) != nullptr || (objectToTransfer->getParentRecursively(SceneObjectType::CONTAINER)) != nullptr);
 
+		ManagedReference<SceneObject*> rootParent = objectToTransfer->getRootParent();
+
 		Locker clocker(objectsParent, creature);
 
 		if (!objectController->transferObject(objectToTransfer, destinationObject, transferType, true)){
@@ -345,7 +347,6 @@ public:
 
 		if (notifyLooted) {
 			ManagedReference<AwakeningLogManager*> logMan = zoneServer->getAwakeningLogManager();
-			ManagedReference<SceneObject*> rootParent = objectToTransfer->getRootParent();
 
 			if (logMan != nullptr) {
 				StringBuffer logEntry;
