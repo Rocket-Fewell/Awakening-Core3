@@ -79,13 +79,13 @@ void LightsaberCrystalComponentImplementation::generateCrystalStats() {
 
 		float minFloatStat = crystalData->getMinForceCost();
 		float maxFloatStat = crystalData->getMaxForceCost();
-
-		floatForceCost = getRandomizedStat(minFloatStat, maxFloatStat, itemLevel);
-
+		// Logic: If a crystal rolls as Flawless (345+), it passes 300 (Premium tier) into the randomizer only for ForceCost. If it is any lower tier, it passes its own itemLevel normally
+		floatForceCost = getRandomizedStat(minFloatStat, maxFloatStat, (itemLevel >= 345) ? 300 : itemLevel);
+		
 		minFloatStat = crystalData->getMinAttackSpeed();
 		maxFloatStat = crystalData->getMaxAttackSpeed();
-
-		attackSpeed = Math::getPrecision(getRandomizedStat(minFloatStat, maxFloatStat, itemLevel), 2);
+		// Same as Above Line 83 , but for AttackSpeed
+		attackSpeed = Math::getPrecision(getRandomizedStat(minFloatStat, maxFloatStat, (itemLevel >= 345) ? 300 : itemLevel), 2);
 	}
 
 	quality = getCrystalQuality();
@@ -160,18 +160,18 @@ void LightsaberCrystalComponentImplementation::validateCrystalStats() {
 
 		if (woundChance > maxStat || woundChance < minStat)
 			woundChance = getRandomizedStat(minStat, maxStat, itemLevel);
-
+		//If a staff member triggers a recalculation command, or an old crystal is validated, any necessary reroll on these two stats will respect the new capped threshold.
 		float minFloatStat = crystalData->getMinForceCost();
 		float maxFloatStat = crystalData->getMaxForceCost();
-
+		
 		if (floatForceCost > maxFloatStat || floatForceCost < minFloatStat)
-			floatForceCost = getRandomizedStat(minFloatStat, maxFloatStat, itemLevel);
+			floatForceCost = getRandomizedStat(minFloatStat, maxFloatStat, (itemLevel >=345) ? 300 : itemLevel);
 
 		minFloatStat = crystalData->getMinAttackSpeed();
 		maxFloatStat = crystalData->getMaxAttackSpeed();
 
 		if (attackSpeed > maxFloatStat || attackSpeed < minFloatStat)
-			attackSpeed = Math::getPrecision(getRandomizedStat(minFloatStat, maxFloatStat, itemLevel), 2);
+			attackSpeed = Math::getPrecision(getRandomizedStat(minFloatStat, maxFloatStat, (itemLevel >=345) ? 300 : itemLevel), 2);
 	}
 }
 
